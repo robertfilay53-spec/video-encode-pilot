@@ -1,0 +1,78 @@
+{
+ "file": "vo-intro.mp3",
+ "duration": 5.4,
+ "language": "en",
+ "text": "Fat Camp took a scary turn when Gorlock went down and everyone rushed over.",
+ "words": [
+  {
+   "word": " Fat",
+   "start": 0.0,
+   "end": 0.42
+  },
+  {
+   "word": " Camp",
+   "start": 0.42,
+   "end": 0.7
+  },
+  {
+   "word": " took",
+   "start": 0.7,
+   "end": 0.96
+  },
+  {
+   "word": " a",
+   "start": 0.96,
+   "end": 1.12
+  },
+  {
+   "word": " scary",
+   "start": 1.12,
+   "end": 1.56
+  },
+  {
+   "word": " turn",
+   "start": 1.56,
+   "end": 1.96
+  },
+  {
+   "word": " when",
+   "start": 1.96,
+   "end": 2.2
+  },
+  {
+   "word": "Gorlock",
+   "start": 2.2,
+   "end": 2.76
+  },
+  {
+   "word": " went",
+   "start": 2.76,
+   "end": 3.0
+  },
+  {
+   "word": " down",
+   "start": 3.0,
+   "end": 3.32
+  },
+  {
+   "word": " and",
+   "start": 3.32,
+   "end": 3.66
+  },
+  {
+   "word": " everyone",
+   "start": 3.66,
+   "end": 4.12
+  },
+  {
+   "word": " rushed",
+   "start": 4.12,
+   "end": 4.56
+  },
+  {
+   "word": " over.",
+   "start": 4.56,
+   "end": 4.92
+  }
+ ]
+}
