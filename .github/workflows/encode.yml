@@ -1,0 +1,69 @@
+name: Encode pilot clip
+
+# ONE-CLIP PILOT. Builds a single already-published SHIP clip
+# (bulk4-viral-adin-2k, "Gorlock went down") with the production encode
+# pipeline, to check GitHub-built quality/consistency vs the local build.
+# Nothing here publishes or schedules anything.
+on:
+  workflow_dispatch:
+
+jobs:
+  encode:
+    runs-on: ubuntu-24.04
+    env:
+      # PINNED ffmpeg: BtbN static build, frozen autobuild tag + SHA256.
+      # Local build is ffmpeg 8.1.2; this is 8.1.3 (closest pinned static
+      # build available). The runner's preinstalled ffmpeg is NEVER used.
+      FFMPEG_TAG: autobuild-2026-11-17-12-40
+      FFMPEG_ASSET: ffmpeg-n8.1.3-35-gf1acb0a266-linux64-gpl-8.1.tar.xz
+      FFMPEG_SHA256: 4f88dca1e0e3079b0e8ba59a74a5bbdb8c89086a1508630616df76a56b0e0e55
+      MARGIN_V: "1550"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install OUR pinned ffmpeg (not the runner's)
+        run: |
+          echo "Runner preinstalled ffmpeg (NOT used, for the record only):"
+          which ffmpeg || echo "no ffmpeg on PATH"
+          ffmpeg -version 2>/dev/null | head -1 || echo "runner ffmpeg not runnable"
+          curl -sL -o /tmp/ffmpeg.tar.xz "https://github.com/BtbN/FFmpeg-Builds/releases/download/${FFMPEG_TAG}/${FFMPEG_ASSET}"
+          echo "${FFMPEG_SHA256}  /tmp/ffmpeg.tar.xz" | sha256sum -c -
+          mkdir -p "$HOME/ffmpeg-pinned"
+          tar --no-same-owner -xf /tmp/ffmpeg.tar.xz -C "$HOME/ffmpeg-pinned" --strip-components=1
+          echo "$HOME/ffmpeg-pinned/bin" >> "$GITHUB_PATH"
+          echo "Pinned ffmpeg staged at $HOME/ffmpeg-pinned/bin"
+
+      - name: Verify pinned ffmpeg (version + needed pieces)
+        run: |
+          echo "which ffmpeg: $(which ffmpeg)"
+          echo "which ffprobe: $(which ffprobe)"
+          ffmpeg -version | head -2
+          ffprobe -version | head -1
+          echo "--- required filters:"
+          ffmpeg -hide_banner -filters | grep -iE "subtitles|loudnorm|drawtext|hqdn3d|unsharp|concat"
+          echo "--- ass filter (libass):"
+          ffmpeg -hide_banner -filters | grep -E " ass "
+          echo "--- required encoders:"
+          ffmpeg -hide_banner -encoders | grep -E "libx264| aac "
+          echo "--- bundled fonts into fontconfig (karaoke ASS resolves by name):"
+          mkdir -p ~/.local/share/fonts
+          cp fonts/NotoSans-CondensedBlack.ttf fonts/Anton-Regular.ttf ~/.local/share/fonts/
+          fc-cache -f
+          fc-list | grep -i "Noto Sans Condensed"
+          fc-list | grep -i "Anton"
+
+      - name: Build pilot clip (timed)
+        run: |
+          echo "BUILD START $(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+          bash build_fix_clip.sh "${GITHUB_WORKSPACE}/work" "${GITHUB_WORKSPACE}/inputs/source.mp4" "${GITHUB_WORKSPACE}/inputs/vo-intro.mp3" "${GITHUB_WORKSPACE}/inputs/vo-intro.words.json" "${GITHUB_WORKSPACE}/inputs/vo-outro.mp3" "${GITHUB_WORKSPACE}/inputs/vo-outro.words.json" "${GITHUB_WORKSPACE}/inputs/moment.words.json" "0:5.4" "11.47:22.59" "12.77:19.69,15.75:18.718" "GORLOCK WENT DOWN" "Clip: Adin Ross" "${GITHUB_WORKSPACE}/work/bulk4-viral-adin-2k-gh.mp4" 9x16 2>&1 | while IFS= read -r line; do printf '[%s] %s\n' "$(date -u '+%H:%M:%S.%3N')" "$line"; done
+          echo "BUILD END $(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+          ls -la work/
+          ffprobe -v error -show_entries format=duration,size -show_entries stream=width,height,codec_name -of default=noprint_wrappers=1 work/bulk4-viral-adin-2k-gh.mp4
+
+      - name: Upload pilot clip
+        uses: actions/upload-artifact@v4
+        with:
+          name: bulk4-viral-adin-2k-gh
+          path: work/bulk4-viral-adin-2k-gh.mp4
+          if-no-files-found: error
